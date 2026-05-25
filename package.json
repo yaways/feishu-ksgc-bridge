@@ -58,6 +58,7 @@
     "bridge"
   ],
   "license": "MIT",
+  "packageManager": "pnpm@10.27.0",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   }
