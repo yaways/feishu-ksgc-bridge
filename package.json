@@ -1,6 +1,6 @@
 {
   "name": "lark-ksgc-bridge",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Bridge Feishu/Lark messenger with local KSGC CLI coding agent",
   "type": "module",
   "bin": {
