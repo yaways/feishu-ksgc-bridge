@@ -1,5 +1,5 @@
 {
-  "name": "lark-ksgc-bridge",
+  "name": "@yaways/lark-ksgc-bridge",
   "version": "0.1.0",
   "description": "Bridge Feishu/Lark messenger with local KSGC CLI coding agent",
   "type": "module",
@@ -57,5 +57,8 @@
     "channel",
     "bridge"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
 }
