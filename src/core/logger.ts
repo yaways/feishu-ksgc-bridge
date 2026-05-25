@@ -240,11 +240,11 @@ export function newTraceId(): string {
 
 /**
  * Scrub a log buffer of identifying / credential material before it leaves
- * the local machine — specifically, before /doctor feeds it to Claude (the
- * Anthropic API will see it) and before the analysis card lands in a
+ * the local machine — specifically, before /doctor feeds it to KSGC (the
+ * AI API will see it) and before the analysis card lands in a
  * Feishu chat (the Lark server may cache card contents).
  *
- * Conservative: keeps log structure intact so Claude can still correlate by
+ * Conservative: keeps log structure intact so KSGC can still correlate by
  * traceId / phase / event. Only the *values* of identifying fields shrink
  * to a last-6-char suffix, and known credential fields become [REDACTED].
  *

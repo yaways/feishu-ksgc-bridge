@@ -42,7 +42,7 @@ import type { WorkspaceStore } from '../workspace/store';
 import { createBoundChat, defaultChatName } from '../bot/group';
 
 export interface Controls {
-  /** Restart the bridge in-process: disconnect WS, kill claude runs, reload
+  /** Restart the bridge in-process: disconnect WS, kill ksgc runs, reload
    * config, reconnect with the new credentials. */
   restart(): Promise<void>;
   /** Stop this whole process gracefully (disconnect + exit). Used by /exit
@@ -558,7 +558,7 @@ const DOCTOR_INSTRUCTIONS = `你是 lark-ksgc-bridge 的诊断助理。下面会
 日志字段含义:
 - ts: ISO 时间戳
 - level: info | warn | error
-- phase: 模块阶段。常见值: ws(WebSocket), intake(消息入站), queue(去抖队列), flush(批处理), media(附件下载), prompt(prompt 组装), session(会话), agent(claude 子进程), card(卡片渲染), comment(文档评论), cardAction(卡片回调), command(斜杠命令), sdk(飞书 SDK 内部)
+- phase: 模块阶段。常见值: ws(WebSocket), intake(消息入站), queue(去抖队列), flush(批处理), media(附件下载), prompt(prompt 组装), session(会话), agent(ksgc 子进程), card(卡片渲染), comment(文档评论), cardAction(卡片回调), command(斜杠命令), sdk(飞书 SDK 内部)
 - event: enter | exit | transition | fail | 各 phase 自定义事件
 - traceId: 同一逻辑操作的串联 ID(同一条消息的多个日志会共享)
 - chatId: 飞书聊天 ID(用 chatId 反查相关日志)
@@ -609,7 +609,7 @@ async function handleDoctor(args: string, ctx: CommandContext): Promise<void> {
     return;
   }
   // Scrub identifying / credential material before the logs (a) reach
-  // Anthropic via the agent prompt, and (b) end up in any card payload
+  // the AI API via the agent prompt, and (b) end up in any card payload
   // Lark may cache server-side.
   const logs = sanitizeLogsForDoctor(rawLogs);
 
@@ -653,7 +653,7 @@ async function handleDoctor(args: string, ctx: CommandContext): Promise<void> {
                 }
                 state = reduce(state, evt);
                 await flush();
-                // Don't wait for stdout to close — some claude versions hang
+                // Don't wait for stdout to close — some ksgc versions hang
                 // briefly post-result, which would leave the for-await stuck.
                 if (state.terminal !== 'running') break;
               }

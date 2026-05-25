@@ -12,8 +12,8 @@ export interface SessionSummary {
 /**
  * Return the most recent `limit` sessions for the given cwd, newest first.
  *
- * Mirrors the original bridge's approach of reading Claude Code's own session
- * storage (~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl). For KSGC,
+ * Mirrors the original bridge's approach of reading KSGC's own session
+ * storage . For KSGC,
  * we call `ksgc --list-sessions` which is KSGC's own session listing command.
  * This ensures we get the correct full UUIDs and previews that KSGC recognises.
  */

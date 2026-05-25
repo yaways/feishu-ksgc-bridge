@@ -103,19 +103,19 @@ export interface AppPreferences {
   messageReplyMigrated?: boolean;
   /**
    * Whether to render tool-call blocks (Bash / Read / Edit / ...) in the
-   * output. Default true. Turn off if you only care about Claude's final
+   * output. Default true. Turn off if you only care about KSGC's final
    * text answer and want to hide the "工具调用过程".
    */
   showToolCalls?: boolean;
   /**
-   * Cap on concurrent claude runs across all chats / topics. Excess runs
+   * Cap on concurrent ksgc runs across all chats / topics. Excess runs
    * queue FIFO. Default 10. Mostly relevant for topic groups where each
    * topic can spawn its own run; capping protects RAM / token spend.
    */
   maxConcurrentRuns?: number;
   /**
-   * Global default idle-timeout for claude runs, in minutes. When set,
-   * if claude emits no stream event for this long the bridge kills the
+   * Global default idle-timeout for ksgc runs, in minutes. When set,
+   * if ksgc emits no stream event for this long the bridge kills the
    * run as presumed-hung. Undefined / 0 = no timeout (the default — runs
    * can hang indefinitely). Per-scope `/timeout` overrides this.
    */
@@ -124,7 +124,7 @@ export interface AppPreferences {
    * Whether the bot only responds to messages that @-mention it in groups
    * (regular and topic groups). p2p is always unrestricted. Default true:
    * groups are quiet unless the user @bot. Set false to let any group
-   * message reach Claude (the 0.1.21-and-earlier behavior).
+   * message reach KSGC (the 0.1.21-and-earlier behavior).
    *
    * @全员 is never responded to regardless (SDK `respondToMentionAll: false`).
    * Cloud-doc comments still require @-mention unconditionally.
@@ -133,8 +133,8 @@ export interface AppPreferences {
   /** Access control — user/chat allowlists + admin gating. See AppAccess. */
   access?: AppAccess;
   /**
-   * Grace period (ms) between SIGTERM and SIGKILL when killing the claude
-   * subprocess. Bumped from a hardcoded 500ms because claude often has its
+   * Grace period (ms) between SIGTERM and SIGKILL when killing the ksgc
+   * subprocess. Bumped from a hardcoded 500ms because ksgc often has its
    * own subprocesses (e.g. lark-cli mid-OAuth) that need a moment to clean
    * up — too short a window and the SIGKILL cascade kills the descendants
    * before they can finish what the user is waiting on. Default 5000ms.
@@ -209,7 +209,7 @@ export function getShowToolCalls(cfg: AppConfig): boolean {
 export function getMaxConcurrentRuns(cfg: AppConfig): number {
   const raw = cfg.preferences?.maxConcurrentRuns;
   if (typeof raw !== 'number' || !Number.isFinite(raw) || raw < 1) return 10;
-  // Reasonable upper bound — at 50+ concurrent claudes the bot box is
+  // Reasonable upper bound — at 50+ concurrent ksgc instances the bot box is
   // probably already RAM-starved. Clamp to keep typos from killing the box.
   return Math.min(Math.floor(raw), 50);
 }
@@ -230,7 +230,7 @@ export function getRequireMentionInGroup(cfg: AppConfig): boolean {
  * the user didn't really mean.
  */
 /**
- * Grace period before SIGKILL fallback when stopping a claude subprocess.
+ * Grace period before SIGKILL fallback when stopping a ksgc subprocess.
  * Returns ms. Defaults to 5000 (5 seconds). Clamps to [100, 30000] so a
  * typo can't either make stop() effectively SIGKILL-immediate or hang for
  * minutes.

@@ -1,7 +1,7 @@
 {
   "name": "lark-ksgc-bridge",
   "version": "0.1.32",
-  "description": "Bridge Feishu/Lark messenger with local CLI coding agents (Claude Code, ...)",
+  "description": "Bridge Feishu/Lark messenger with local KSGC CLI coding agent",
   "type": "module",
   "bin": {
     "lark-ksgc-bridge": "./bin/lark-ksgc-bridge.mjs"
@@ -52,8 +52,7 @@
   "keywords": [
     "feishu",
     "lark",
-    "claude",
-    "claude-code",
+    "ksgc",
     "cli",
     "channel",
     "bridge"
