@@ -4,8 +4,6 @@ A lightweight bot that bridges Feishu / Lark messenger with your local KSGC CLI.
 
 [中文 README](./README.zh.md)
 
-关于能实现的效果，详情可以阅读[飞书文档](https://larkcommunity.feishu.cn/docx/OaRIdFIRFoLM3xxTmKwcetHqn5e)
-
 ## What it does
 
 - Forwards Feishu / Lark messages (DM directly, or `@bot` in a group) to your local `ksgc` CLI, running in a working directory you control.
@@ -19,7 +17,7 @@ A lightweight bot that bridges Feishu / Lark messenger with your local KSGC CLI.
 ## Prerequisites
 
 - Node.js **>= 20**
-- `ksgc` CLI installed and logged in — see https://github.com/nicepkg/ksgc
+- `ksgc` CLI installed and logged in — see https://github.com/google-gemini/gemini-cli
 - A Lark / Feishu **PersonalAgent** app (the QR-code wizard on first launch can create one for you).
 
 ## Install

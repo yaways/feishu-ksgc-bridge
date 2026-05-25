@@ -4,8 +4,6 @@
 
 [English README](./README.md)
 
-关于能实现的效果，详情可以阅读[飞书文档](https://larkcommunity.feishu.cn/docx/OaRIdFIRFoLM3xxTmKwcetHqn5e)
-
 ## 能干什么
 
 - 在飞书（私聊直接发；群里 `@bot`）把消息转给本地的 `ksgc` CLI，KSGC 在你指定的工作目录里工作
@@ -19,7 +17,7 @@
 ## 前置条件
 
 - Node.js **≥ 20**
-- `ksgc` CLI 已安装并登录：https://github.com/nicepkg/ksgc
+- `ksgc` CLI 已安装并登录：https://github.com/google-gemini/gemini-cli
 - 一个飞书 / Lark PersonalAgent 应用（首次启动的扫码向导能帮你创建）
 
 ## 安装
