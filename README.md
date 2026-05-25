@@ -41,7 +41,7 @@ The first run detects there's no app configured and **opens a QR-code wizard**:
 1. A QR code renders in your terminal.
 2. Scan it with the Feishu / Lark app.
 3. Pick or create a PersonalAgent app.
-4. Credentials are written to `~/.lark-ksgc/config.json`.
+4. Credentials are written to `~/.lark-channel/config.json`.
 
 ## Commands
 
@@ -71,9 +71,9 @@ lark-ksgc-bridge unregister            Remove the service definition and stop
 The daemon auto-restarts on crash and on user login. Platform mapping:
 - **macOS** → `launchd` user agent at `~/Library/LaunchAgents/ai.lark-ksgc-bridge.bot.plist`
 - **Linux** → `systemd` user unit at `~/.config/systemd/user/lark-ksgc-bridge.bot.service`. For the daemon to survive logout, run `loginctl enable-linger $USER` once.
-- **Windows** → Task Scheduler task `LarkKsgcBridge.Bot`, triggered ONLOGON. Launcher script at `~/.lark-ksgc/daemon-launcher.cmd`.
+- **Windows** → Task Scheduler task `LarkKsgcBridge.Bot`, triggered ONLOGON. Launcher script at `~/.lark-channel/daemon-launcher.cmd`.
 
-Daemon logs go to `~/.lark-ksgc/logs/daemon-stdout.log` and `daemon-stderr.log` alongside the bridge's per-day structured logs.
+Daemon logs go to `~/.lark-channel/logs/daemon-stdout.log` and `daemon-stderr.log` alongside the bridge's per-day structured logs.
 
 > When the same app is started multiple times, Lark's open platform routes events to one of the live WebSocket connections at random. `run` detects existing processes for the same app and (in a TTY) prompts: `[c]ontinue / [k]ill old / [a]bort`. In non-TTY mode it warns and continues.
 
@@ -104,14 +104,14 @@ Daemon logs go to `~/.lark-ksgc/logs/daemon-stdout.log` and `daemon-stderr.log` 
 
 | Path | Content |
 |---|---|
-| `~/.lark-ksgc/config.json` | App credentials (App ID / Secret), mode 600 |
-| `~/.lark-ksgc/sessions.json` | KSGC session id + cwd per chat / topic (+ optional `/timeout` override) |
-| `~/.lark-ksgc/workspaces.json` | Named-workspace map |
-| `~/.lark-ksgc/processes.json` | Process registry for live `start` instances (used by `ps`/`stop`); dead PIDs are auto-pruned |
-| `~/.lark-ksgc/media/<chatId>/` | Downloaded images / files, cleaned up after 24h |
-| `~/.lark-ksgc/logs/YYYY-MM-DD.log` | Structured run logs (JSONL), rotated daily; older than 7 days are pruned at startup (`LARK_KSGC_LOG_DAYS` env var overrides). `/doctor` reads these. |
+| `~/.lark-channel/config.json` | App credentials (App ID / Secret), mode 600 |
+| `~/.lark-channel/sessions.json` | KSGC session id + cwd per chat / topic (+ optional `/timeout` override) |
+| `~/.lark-channel/workspaces.json` | Named-workspace map |
+| `~/.lark-channel/processes.json` | Process registry for live `start` instances (used by `ps`/`stop`); dead PIDs are auto-pruned |
+| `~/.lark-channel/media/<chatId>/` | Downloaded images / files, cleaned up after 24h |
+| `~/.lark-channel/logs/YYYY-MM-DD.log` | Structured run logs (JSONL), rotated daily; older than 7 days are pruned at startup (`LARK_KSGC_LOG_DAYS` env var overrides). `/doctor` reads these. |
 
-> Upgrading from before 0.1.11? Run `lark-ksgc-bridge migrate` once — it moves anything under `~/.config/lark-ksgc-bridge/` and `~/.cache/lark-ksgc-bridge/` to the new location and upgrades `config.json` to the new schema.
+> Upgrading from before 0.1.11? Run `lark-ksgc-bridge migrate` once — it moves anything under `~/.config/lark-channel-bridge/` and `~/.cache/lark-channel-bridge/` to the new location and upgrades `config.json` to the new schema.
 
 ## Access control (optional)
 
@@ -154,7 +154,7 @@ Fill all three. The `/config` form catches common mistakes — e.g. if your admi
 Easiest path: have the target user send the bot a message (or `@`-mention it in the target group), then in your terminal:
 
 ```bash
-grep '"event":"enter"' ~/.lark-ksgc/logs/$(date +%Y-%m-%d).log | tail -5
+grep '"event":"enter"' ~/.lark-channel/logs/$(date +%Y-%m-%d).log | tail -5
 ```
 
 Every line carries `chatId` (group or DM id) and `senderId` (the user's `open_id`). Copy them from there.
@@ -170,7 +170,7 @@ The Feishu open-platform "Get user info" API also works but needs the `contact:u
 
 ### Advanced: editing the config file directly
 
-The `/config` form writes to `~/.lark-ksgc/config.json` under `preferences.access`:
+The `/config` form writes to `~/.lark-channel/config.json` under `preferences.access`:
 
 ```json
 {

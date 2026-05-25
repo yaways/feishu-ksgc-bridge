@@ -41,7 +41,7 @@ lark-ksgc-bridge run
 1. 终端渲染一个二维码
 2. 用飞书 App 扫码
 3. 选择 / 创建 PersonalAgent 应用
-4. 成功后凭据写入 `~/.lark-ksgc/config.json`
+4. 成功后凭据写入 `~/.lark-channel/config.json`
 
 ## 命令速查
 
@@ -71,9 +71,9 @@ lark-ksgc-bridge unregister            撤销注册（停止 + 删除服务定�
 daemon 崩溃会被自动拉起，用户登录时也会自动启动。平台映射:
 - **macOS** → `launchd` 用户代理 `~/Library/LaunchAgents/ai.lark-ksgc-bridge.bot.plist`
 - **Linux** → `systemd` 用户单元 `~/.config/systemd/user/lark-ksgc-bridge.bot.service`。要让 daemon 在退出登录后还能跑，执行一次 `loginctl enable-linger $USER`。
-- **Windows** → Task Scheduler 任务 `LarkKsgcBridge.Bot`，触发条件为 ONLOGON。启动脚本位于 `~/.lark-ksgc/daemon-launcher.cmd`。
+- **Windows** → Task Scheduler 任务 `LarkKsgcBridge.Bot`，触发条件为 ONLOGON。启动脚本位于 `~/.lark-channel/daemon-launcher.cmd`。
 
-daemon 的 stdout / stderr 写到 `~/.lark-ksgc/logs/daemon-stdout.log` 和 `daemon-stderr.log`，跟 bridge 自己的每日结构化日志放在同一个目录。
+daemon 的 stdout / stderr 写到 `~/.lark-channel/logs/daemon-stdout.log` 和 `daemon-stderr.log`，跟 bridge 自己的每日结构化日志放在同一个目录。
 
 > 多开同一个 app 时，开放平台会把事件随机推到其中一个长连接。`run` 启动前会检测同 app 已有的进程，TTY 下提示 `[c]ontinue / [k]ill old / [a]bort` 三选；非 TTY 只 warn 并继续。
 
@@ -104,14 +104,14 @@ daemon 的 stdout / stderr 写到 `~/.lark-ksgc/logs/daemon-stdout.log` 和 `dae
 
 | 路径 | 内容 |
 |---|---|
-| `~/.lark-ksgc/config.json` | 应用凭据（App ID / Secret），权限 600 |
-| `~/.lark-ksgc/sessions.json` | 每个 chat / 话题 的 KSGC session id + cwd（+ 可选的 `/timeout` 覆盖） |
-| `~/.lark-ksgc/workspaces.json` | 工作空间映射 |
-| `~/.lark-ksgc/processes.json` | 当前在跑的 start 进程注册中心（`ps`/`stop` 用），死进程会被自动清理 |
-| `~/.lark-ksgc/media/<chatId>/` | 下载的图片 / 文件，24h 自动清理 |
-| `~/.lark-ksgc/logs/YYYY-MM-DD.log` | 结构化运行日志（JSON line），按天滚动；启动时清理超过 7 天的老文件（`LARK_KSGC_LOG_DAYS` 环境变量可改）；`/doctor` 命令读它做诊断 |
+| `~/.lark-channel/config.json` | 应用凭据（App ID / Secret），权限 600 |
+| `~/.lark-channel/sessions.json` | 每个 chat / 话题 的 KSGC session id + cwd（+ 可选的 `/timeout` 覆盖） |
+| `~/.lark-channel/workspaces.json` | 工作空间映射 |
+| `~/.lark-channel/processes.json` | 当前在跑的 start 进程注册中心（`ps`/`stop` 用），死进程会被自动清理 |
+| `~/.lark-channel/media/<chatId>/` | 下载的图片 / 文件，24h 自动清理 |
+| `~/.lark-channel/logs/YYYY-MM-DD.log` | 结构化运行日志（JSON line），按天滚动；启动时清理超过 7 天的老文件（`LARK_KSGC_LOG_DAYS` 环境变量可改）；`/doctor` 命令读它做诊断 |
 
-> 升级自 0.1.11 之前的版本？跑一次 `lark-ksgc-bridge migrate` —— 自动把 `~/.config/lark-ksgc-bridge/` 和 `~/.cache/lark-ksgc-bridge/` 下的内容搬到新位置，并把 `config.json` 升级到新结构。
+> 升级自 0.1.11 之前的版本？跑一次 `lark-ksgc-bridge migrate` —— 自动把 `~/.config/lark-channel-bridge/` 和 `~/.cache/lark-channel-bridge/` 下的内容搬到新位置，并把 `config.json` 升级到新结构。
 
 ## 访问控制（可选）
 
@@ -154,7 +154,7 @@ daemon 的 stdout / stderr 写到 `~/.lark-ksgc/logs/daemon-stdout.log` 和 `dae
 最快的办法：让目标用户给 bot 发一条任意消息（群的话就 @bot 一下），然后在终端：
 
 ```bash
-grep '"event":"enter"' ~/.lark-ksgc/logs/$(date +%Y-%m-%d).log | tail -5
+grep '"event":"enter"' ~/.lark-channel/logs/$(date +%Y-%m-%d).log | tail -5
 ```
 
 每一行都带 `chatId`（= 群或私聊 ID）和 `senderId`（= 用户 `open_id`），照着复制就行。
@@ -170,7 +170,7 @@ grep '"event":"enter"' ~/.lark-ksgc/logs/$(date +%Y-%m-%d).log | tail -5
 
 ### 高级：直接改配置文件
 
-不太想登飞书也可以，`/config` 表单背后写的是 `~/.lark-ksgc/config.json` 的 `preferences.access`：
+不太想登飞书也可以，`/config` 表单背后写的是 `~/.lark-channel/config.json` 的 `preferences.access`：
 
 ```json
 {
