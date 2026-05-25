@@ -23,9 +23,9 @@ A lightweight bot that bridges Feishu / Lark messenger with your local KSGC CLI.
 ## Install
 
 ```bash
-npm i -g @yaways/lark-ksgc-bridge
+npm i -g lark-ksgc-bridge
 # or
-pnpm add -g @yaways/lark-ksgc-bridge
+pnpm add -g lark-ksgc-bridge
 ```
 
 ## First run
@@ -56,7 +56,7 @@ lark-ksgc-bridge --help                List all commands
 
 **Service-level** (run the bridge as a background OS-managed daemon):
 
-> ⚠️ **Install globally before using service-level commands**. The daemon's launchd plist / systemd unit / Windows task hard-codes the path to the bridge CLI; if you invoke via `npx @yaways/lark-ksgc-bridge start`, that path lives in npm's temp cache (`~/.npm/_npx/<hash>/...`) and will be garbage-collected — your daemon stops working as soon as the cache is cleaned. Use `npm install -g @yaways/lark-ksgc-bridge` first, then run `lark-ksgc-bridge start`. `bridge run` is fine via npx (one-shot process).
+> ⚠️ **Install globally before using service-level commands**. The daemon's launchd plist / systemd unit / Windows task hard-codes the path to the bridge CLI; if you invoke via `npx lark-ksgc-bridge start`, that path lives in npm's temp cache (`~/.npm/_npx/<hash>/...`) and will be garbage-collected — your daemon stops working as soon as the cache is cleaned. Use `npm install -g lark-ksgc-bridge` first, then run `lark-ksgc-bridge start`. `bridge run` is fine via npx (one-shot process).
 
 ```
 lark-ksgc-bridge start                 Install (if needed) and start the daemon

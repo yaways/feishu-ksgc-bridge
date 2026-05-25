@@ -23,9 +23,9 @@
 ## 安装
 
 ```bash
-npm i -g @yaways/lark-ksgc-bridge
+npm i -g lark-ksgc-bridge
 # 或
-pnpm add -g @yaways/lark-ksgc-bridge
+pnpm add -g lark-ksgc-bridge
 ```
 
 ## 首次启动
@@ -56,7 +56,7 @@ lark-ksgc-bridge --help                列所有命令
 
 **服务层**（让 OS 在后台托管 bridge）:
 
-> ⚠️ **服务层命令必须先全局安装,不能直接用 npx**。daemon 的 launchd plist / systemd unit / Windows 任务里会**硬编码** bridge CLI 的路径;通过 `npx @yaways/lark-ksgc-bridge start` 调用时,这条路径在 npm 的临时缓存里(`~/.npm/_npx/<hash>/...`),会被 GC 清掉 — 一旦缓存清理,daemon 就起不来了。请先 `npm install -g @yaways/lark-ksgc-bridge`,再 `lark-ksgc-bridge start`。`bridge run` 用 npx 调用没问题(单次进程)。
+> ⚠️ **服务层命令必须先全局安装,不能直接用 npx**。daemon 的 launchd plist / systemd unit / Windows 任务里会**硬编码** bridge CLI 的路径;通过 `npx lark-ksgc-bridge start` 调用时,这条路径在 npm 的临时缓存里(`~/.npm/_npx/<hash>/...`),会被 GC 清掉 — 一旦缓存清理,daemon 就起不来了。请先 `npm install -g lark-ksgc-bridge`,再 `lark-ksgc-bridge start`。`bridge run` 用 npx 调用没问题(单次进程)。
 
 ```
 lark-ksgc-bridge start                 注册（如需）+ 启动后台 daemon
