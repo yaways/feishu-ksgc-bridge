@@ -1,10 +1,10 @@
 {
-  "name": "lark-channel-bridge",
+  "name": "lark-ksgc-bridge",
   "version": "0.1.32",
   "description": "Bridge Feishu/Lark messenger with local CLI coding agents (Claude Code, ...)",
   "type": "module",
   "bin": {
-    "lark-channel-bridge": "./bin/lark-channel-bridge.mjs"
+    "lark-ksgc-bridge": "./bin/lark-ksgc-bridge.mjs"
   },
   "exports": {
     ".": {

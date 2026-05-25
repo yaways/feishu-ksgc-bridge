@@ -35,7 +35,7 @@ async function checkLarkCli(opts: PreFlightOptions): Promise<void> {
       '',
       'ℹ️  lark-cli 未安装',
       '',
-      'lark-cli 是飞书的命令行工具,装上后 Claude 可以:',
+      'lark-cli 是飞书的命令行工具,装上后 KSGC 可以:',
       '  • 主动发送交互卡片 / 表单',
       '  • 查询日历、文档、待办、OKR、考勤',
       '  • 200+ 飞书 API 命令',
@@ -72,7 +72,10 @@ async function checkLarkCli(opts: PreFlightOptions): Promise<void> {
   }
   sInstall.stop('Installed');
 
-  // Step 2: bind
+  // Step 2: bind — use --source lark-channel because lark-cli only
+  // recognises openclaw / hermes / lark-channel as valid sources.
+  // Our data directory (~/.lark-ksgc/) is the same path lark-cli
+  // reads from, so the bind succeeds.
   const sBind = p.spinner();
   sBind.start('Binding to bridge credentials');
   const bindResult = await runCapture(
@@ -105,7 +108,7 @@ function printInstallFailedWarning(): void {
       '',
       '原因可能是:网络不通 / npm 全局安装无权限 / registry 异常',
       '',
-      'Bridge 仍会继续启动,但 Claude 工具调用会受限。',
+      'Bridge 仍会继续启动,但 KSGC 工具调用会受限。',
       '请手动执行:',
       '',
       `  ${BOLD}npm install -g @larksuite/cli${RESET}`,

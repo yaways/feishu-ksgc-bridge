@@ -1,8 +1,6 @@
-import { createReadStream } from 'node:fs';
-import { readdir, stat } from 'node:fs/promises';
+import { execSync } from 'node:child_process';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
-import { createInterface } from 'node:readline';
+import { basename } from 'node:path';
 
 export interface SessionSummary {
   sessionId: string;
@@ -11,96 +9,86 @@ export interface SessionSummary {
   lineCount: number;
 }
 
-function encodeCwd(cwd: string): string {
-  return cwd.replace(/\//g, '-');
-}
-
-function claudeProjectDir(cwd: string): string {
-  return join(homedir(), '.claude', 'projects', encodeCwd(cwd));
-}
-
-/** Return the most recent `limit` jsonl sessions for the given cwd, newest first. */
+/**
+ * Return the most recent `limit` sessions for the given cwd, newest first.
+ *
+ * Mirrors the original bridge's approach of reading Claude Code's own session
+ * storage (~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl). For KSGC,
+ * we call `ksgc --list-sessions` which is KSGC's own session listing command.
+ * This ensures we get the correct full UUIDs and previews that KSGC recognises.
+ */
 export async function listRecentSessions(cwd: string, limit = 5): Promise<SessionSummary[]> {
-  const dir = claudeProjectDir(cwd);
-  let files: string[];
   try {
-    files = await readdir(dir);
+    const output = execSync('ksgc --list-sessions', {
+      cwd,
+      encoding: 'utf8',
+      timeout: 10_000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    return parseListSessions(output, limit);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
-    throw err;
+    // ksgc not installed or no sessions — return empty list
+    return [];
   }
-
-  const jsonls = files.filter((f) => f.endsWith('.jsonl'));
-  const withStats = await Promise.all(
-    jsonls.map(async (f) => {
-      const path = join(dir, f);
-      try {
-        const st = await stat(path);
-        return { file: f, path, mtime: st.mtimeMs };
-      } catch {
-        return null;
-      }
-    }),
-  );
-
-  const sorted = withStats
-    .filter((x): x is { file: string; path: string; mtime: number } => x !== null)
-    .sort((a, b) => b.mtime - a.mtime)
-    .slice(0, limit);
-
-  return Promise.all(
-    sorted.map(async (entry) => {
-      const sessionId = entry.file.replace(/\.jsonl$/, '');
-      const { preview, lineCount } = await summarize(entry.path);
-      return { sessionId, mtime: entry.mtime, preview, lineCount };
-    }),
-  );
 }
 
-async function summarize(path: string): Promise<{ preview: string; lineCount: number }> {
-  const stream = createReadStream(path, { encoding: 'utf8' });
-  const rl = createInterface({ input: stream });
-  let preview = '';
-  let lineCount = 0;
-  try {
-    for await (const line of rl) {
-      lineCount++;
-      if (!preview && line.includes('"type":"user"')) {
-        try {
-          const obj = JSON.parse(line) as { type?: string; message?: { content?: unknown } };
-          if (obj.type === 'user' && obj.message) {
-            const text = extractUserText(obj.message.content);
-            if (text) preview = text.slice(0, 80);
-          }
-        } catch {
-          /* malformed line */
-        }
-      }
-      // reading the whole file is fine — sessions are usually under 10k lines
-      if (lineCount > 20_000) break;
-    }
-  } finally {
-    rl.close();
-    stream.destroy();
+/**
+ * Parse the output of `ksgc --list-sessions`:
+ *
+ *   Available sessions for this project (3):
+ *     1. Adapt project to KSGC (Just now) [4865efe2-54d9-40ff-ae3b-008cb4833186]
+ *     2. say hello in one word (2 hours ago) [143a8dd3-8e48-45df-b853-b3d427293c6d]
+ *     3. list files (3 days ago) [c4aeffda-d1ba-45b9-8d82-b5f00d071e26]
+ */
+function parseListSessions(output: string, limit: number): SessionSummary[] {
+  const lines = output.split('\n');
+  const sessions: SessionSummary[] = [];
+
+  for (const line of lines) {
+    // Match: N. <preview> (<relTime>) [<sessionId>]
+    const match = line.match(/^\s*\d+\.\s+(.+?)\s+\(([^)]+)\)\s+\[([0-9a-f-]{36})\]\s*$/i);
+    if (!match) continue;
+
+    const preview = match[1]!.trim();
+    const relTime = match[2]!.trim();
+    const sessionId = match[3]!.trim();
+
+    sessions.push({
+      sessionId,
+      mtime: relTimeToTimestamp(relTime),
+      preview: preview.slice(0, 80),
+      lineCount: 0, // not available from --list-sessions
+    });
+
+    if (sessions.length >= limit) break;
   }
-  return { preview: preview || '(空会话)', lineCount };
+
+  return sessions;
 }
 
-function extractUserText(content: unknown): string {
-  if (typeof content === 'string') return content.trim();
-  if (Array.isArray(content)) {
-    for (const block of content) {
-      if (
-        block &&
-        typeof block === 'object' &&
-        (block as { type?: unknown }).type === 'text' &&
-        typeof (block as { text?: unknown }).text === 'string'
-      ) {
-        return (block as { text: string }).text.trim();
-      }
-    }
+/**
+ * Convert a relative time string (from ksgc --list-sessions) to an
+ * approximate timestamp. Used only for sorting — precision doesn't matter.
+ */
+function relTimeToTimestamp(relTime: string): number {
+  const now = Date.now();
+  const match = relTime.match(/^(\d+)\s*(second|minute|hour|day|week|month|year)s?\s+ago$/i);
+  if (!match) return now;
+
+  const n = Number.parseInt(match[1]!, 10);
+  const unit = match[2]!.toLowerCase();
+
+  switch (unit) {
+    case 'second': return now - n * 1000;
+    case 'minute': return now - n * 60_000;
+    case 'hour': return now - n * 3_600_000;
+    case 'day': return now - n * 86_400_000;
+    case 'week': return now - n * 604_800_000;
+    case 'month': return now - n * 2_592_000_000;
+    case 'year': return now - n * 31_536_000_000;
+    default: return now;
   }
-  return '';
 }
 
 /** Format a relative time like "3 小时前", "昨天", "3 天前". */

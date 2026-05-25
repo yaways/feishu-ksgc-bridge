@@ -1,7 +1,7 @@
 import dns from 'node:dns';
 import { createInterface } from 'node:readline';
 import pkg from '../../../package.json';
-import { ClaudeAdapter } from '../../agent/claude/adapter';
+import { KsgcAdapter } from '../../agent/ksgc/adapter';
 import { startChannel, type BridgeChannel } from '../../bot/channel';
 import { runRegistrationWizard } from '../../bot/wizard';
 import type { Controls } from '../../commands';
@@ -76,10 +76,10 @@ export async function runStart(opts: StartOptions): Promise<void> {
 
   await preFlightChecks({ skipCheckLarkCli: opts.skipCheckLarkCli });
 
-  const agent = new ClaudeAdapter();
+  const agent = new KsgcAdapter();
   if (!(await agent.isAvailable())) {
-    console.error('✗ 未找到 claude CLI。请先安装 Claude Code：');
-    console.error('  https://docs.anthropic.com/en/docs/claude-code/quickstart');
+    console.error('✗ 未找到 ksgc CLI。请先安装 KSGC：');
+    console.error('  https://github.com/nicepkg/ksgc');
     process.exit(1);
   }
 
@@ -302,7 +302,7 @@ async function maybeMigratePlaintextSecret(
       );
       await setSecret(secretKeyForApp(cfg.accounts.app.id), s);
       await saveConfig(next, configPath);
-      console.log('🔒 已把 App Secret 加密迁移到 ~/.lark-channel/secrets.enc');
+      console.log('🔒 已把 App Secret 加密迁移到 ~/.lark-ksgc/secrets.enc');
       return next;
     } catch (err) {
       log.warn('config', 'migrate-encrypted-failed', {

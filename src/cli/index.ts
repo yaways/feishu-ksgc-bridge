@@ -20,7 +20,7 @@ import { runStart } from './commands/start';
 const program = new Command();
 
 program
-  .name('lark-channel-bridge')
+  .name('lark-ksgc-bridge')
   .description('Bridge Feishu/Lark messenger with local CLI coding agents')
   .version(pkg.version, '-v, --version');
 
@@ -89,7 +89,7 @@ program
 
 const secrets = program
   .command('secrets')
-  .description('Manage the bridge\'s encrypted secret keystore (~/.lark-channel/secrets.enc)');
+  .description('Manage the bridge\'s encrypted secret keystore (~/.lark-ksgc/secrets.enc)');
 
 secrets
   .command('get')

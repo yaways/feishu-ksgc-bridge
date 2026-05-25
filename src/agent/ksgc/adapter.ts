@@ -1,20 +1,20 @@
 import type { ChildProcessByStdio } from 'node:child_process';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
-import type { Readable } from 'node:stream';
+import type { Readable, Writable } from 'node:stream';
 import { log } from '../../core/logger';
 import type { AgentAdapter, AgentEvent, AgentRun, AgentRunOptions } from '../types';
 import { translateEvent } from './stream-json';
 
-export interface ClaudeAdapterOptions {
+export interface KsgcAdapterOptions {
   binary?: string;
 }
 
-type ClaudeChild = ChildProcessByStdio<null, Readable, Readable>;
+type KsgcChild = ChildProcessByStdio<Writable, Readable, Readable>;
 
-const BRIDGE_SYSTEM_PROMPT = `# lark-channel-bridge 运行约定
+const BRIDGE_SYSTEM_PROMPT = `# lark-ksgc-bridge 运行约定
 
-你正在 lark-channel-bridge 里跑：把飞书/Lark 用户消息桥到本地 \`claude\` CLI。
+你正在 lark-ksgc-bridge 里跑：把飞书/Lark 用户消息桥到本地 \`ksgc\` CLI。
 
 ## bridge_context
 
@@ -87,7 +87,7 @@ sender_name: ...
 
 ## 飞书 OAuth 授权（\`lark-cli auth login\`）
 
-授权流程要让 \`lark-cli\` 进程一直活到用户在浏览器里点完为止。bridge 在你的 run 结束之后会回收 claude，**你 spawn 的任何后台 bash 也会跟着死**——所以授权必须用"前台阻塞"的方式跑：
+授权流程要让 \`lark-cli\` 进程一直活到用户在浏览器里点完为止。bridge 在你的 run 结束之后会回收 ksgc，**你 spawn 的任何后台 bash 也会跟着死**——所以授权必须用"前台阻塞"的方式跑：
 
 1. **仅在 p2p 里发起授权**。从 \`bridge_context.chat_type\` 看：
    - \`chat_type: p2p\` —— 正常按下面流程走。
@@ -101,14 +101,14 @@ sender_name: ...
 5. 如果用户中途想取消，他们会发 \`/stop\`——那时被 kill 是预期行为，不用兜底。
 `;
 
-export class ClaudeAdapter implements AgentAdapter {
-  readonly id = 'claude';
-  readonly displayName = 'Claude Code';
+export class KsgcAdapter implements AgentAdapter {
+  readonly id = 'ksgc';
+  readonly displayName = 'KSGC';
 
   private readonly binary: string;
 
-  constructor(opts: ClaudeAdapterOptions = {}) {
-    this.binary = opts.binary ?? 'claude';
+  constructor(opts: KsgcAdapterOptions = {}) {
+    this.binary = opts.binary ?? 'ksgc';
   }
 
   async isAvailable(): Promise<boolean> {
@@ -125,20 +125,32 @@ export class ClaudeAdapter implements AgentAdapter {
       opts.prompt,
       '--output-format',
       'stream-json',
-      '--verbose',
-      '--permission-mode',
-      opts.permissionMode ?? 'bypassPermissions',
-      '--append-system-prompt',
-      BRIDGE_SYSTEM_PROMPT,
+      '--debug',
+      '--approval-mode',
+      mapApprovalMode(opts.permissionMode),
     ];
     if (opts.sessionId) args.push('--resume', opts.sessionId);
     if (opts.model) args.push('--model', opts.model);
 
+    // Always use 'pipe' for stdin so TypeScript infers the correct
+    // ChildProcessByStdio type. We only write to stdin on the first run
+    // of a session; on resume the bridge prompt is already in the
+    // conversation history so we skip it — avoids redundant token cost.
+    const isFirstRun = !opts.sessionId;
+
     const child = spawn(this.binary, args, {
       cwd: opts.cwd,
-      env: { ...process.env, LARK_CHANNEL: '1' },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, LARK_KSGC: '1' },
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
+
+    // Inject bridge system prompt via stdin on first run.
+    // KSGC concatenates stdin before the -p prompt, so the bridge
+    // conventions appear as context preceding the user's message.
+    if (isFirstRun) {
+      child.stdin.write(BRIDGE_SYSTEM_PROMPT);
+    }
+    child.stdin.end();
 
     log.info('agent', 'spawn', {
       pid: child.pid ?? null,
@@ -149,9 +161,6 @@ export class ClaudeAdapter implements AgentAdapter {
     });
 
     // Listeners MUST be attached synchronously here, before we return.
-    // The 'error' and exit-related events can fire in the next tick; if we
-    // defer attachment to the async-generator body, those events fire into
-    // the void and the generator hangs.
     const stderrChunks: Buffer[] = [];
     let stderrBuffer = '';
     child.stderr.on('data', (chunk: Buffer) => {
@@ -174,11 +183,6 @@ export class ClaudeAdapter implements AgentAdapter {
       log.info('agent', 'exit', { pid: child.pid ?? null, code, signal });
     });
 
-    // Default 5s if caller didn't specify — claude often has live
-    // subprocesses (lark-cli waiting for OAuth, long Bash, etc.) and the
-    // old 500ms was nowhere near enough for them to flush state before the
-    // SIGKILL cascade. Callers (channel.ts, /doctor) override per-run with
-    // a value derived from preferences.
     const stopGraceMs = opts.stopGraceMs ?? 5000;
 
     return {
@@ -225,18 +229,32 @@ export class ClaudeAdapter implements AgentAdapter {
   }
 }
 
+/** Map AgentRunOptions.permissionMode to KSGC --approval-mode values. */
+function mapApprovalMode(
+  mode?: AgentRunOptions['permissionMode'],
+): string {
+  switch (mode) {
+    case 'bypassPermissions':
+      return 'yolo';
+    case 'acceptEdits':
+      return 'auto_edit';
+    case 'plan':
+      return 'plan';
+    default:
+      return 'yolo';
+  }
+}
+
 async function* createEventStream(
-  child: ClaudeChild,
+  child: KsgcChild,
   stderrChunks: Buffer[],
   getError: () => Error | null,
 ): AsyncGenerator<AgentEvent> {
-  // If fork itself failed synchronously, child.pid is undefined. The 'error'
-  // event (ENOENT etc.) fires in the next tick, so also check getError().
   if (!child.pid) {
     const err = getError();
     yield {
       type: 'error',
-      message: err ? `failed to spawn claude: ${err.message}` : 'spawn returned no pid',
+      message: err ? `failed to spawn ksgc: ${err.message}` : 'spawn returned no pid',
     };
     return;
   }
@@ -258,9 +276,6 @@ async function* createEventStream(
     rl.close();
   }
 
-  // When the child is killed by a signal, exitCode stays null and signalCode
-  // carries the name. Both must be checked or we'll attach an 'exit' listener
-  // for an event that already fired and hang forever.
   const exitCode = await new Promise<number | null>((resolve) => {
     if (child.exitCode !== null || child.signalCode !== null) {
       resolve(child.exitCode);
@@ -273,8 +288,8 @@ async function* createEventStream(
   if (exitCode !== 0 && exitCode !== null) {
     const stderr = Buffer.concat(stderrChunks).toString('utf8').trim();
     const detail = stderr ? `: ${stderr.slice(0, 500)}` : '';
-    yield { type: 'error', message: `claude exited with code ${exitCode}${detail}` };
+    yield { type: 'error', message: `ksgc exited with code ${exitCode}${detail}` };
   } else if (runtimeError) {
-    yield { type: 'error', message: `claude runtime error: ${runtimeError.message}` };
+    yield { type: 'error', message: `ksgc runtime error: ${runtimeError.message}` };
   }
 }
