@@ -72,7 +72,7 @@ export type MessageReplyMode = 'card' | 'markdown' | 'text';
  * Access control settings. All three lists default to "no restriction" when
  * empty / undefined, so existing deployments are not broken on upgrade.
  * Operators that want a hardened deployment fill these in via
- * `~/.lark-ksgc/config.json` (no CLI surface yet — by design, since
+ * `~/.lark-channel/config.json` (no CLI surface yet — by design, since
  * persisting the lists requires the operator to look up open_ids/chat_ids
  * out-of-band anyway).
  */

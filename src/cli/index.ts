@@ -89,7 +89,7 @@ program
 
 const secrets = program
   .command('secrets')
-  .description('Manage the bridge\'s encrypted secret keystore (~/.lark-ksgc/secrets.enc)');
+  .description('Manage the bridge\'s encrypted secret keystore (~/.lark-channel/secrets.enc)');
 
 secrets
   .command('get')

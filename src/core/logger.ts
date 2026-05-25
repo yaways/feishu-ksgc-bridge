@@ -29,7 +29,7 @@ const STDOUT_INFO_ALLOWLIST = new Set<string>([
  * Structured logger.
  *
  * Two destinations on every call:
- *  1. JSON line into `~/.lark-ksgc/logs/YYYY-MM-DD.log` — the durable
+ *  1. JSON line into `~/.lark-channel/logs/YYYY-MM-DD.log` — the durable
  *     record `/doctor` greps over.
  *  2. Compact human-readable line on stdout/stderr — for live tailing in dev.
  *

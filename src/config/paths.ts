@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const appDir = join(homedir(), '.lark-ksgc');
+const appDir = join(homedir(), '.lark-channel');
 
 export const paths = {
   appDir,
@@ -32,10 +32,10 @@ export const paths = {
 export const legacyPaths = {
   appDir: join(
     process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config'),
-    'lark-ksgc-bridge',
+    'lark-channel-bridge',
   ),
   cacheDir: join(
     process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'),
-    'lark-ksgc-bridge',
+    'lark-channel-bridge',
   ),
 };

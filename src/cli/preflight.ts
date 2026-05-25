@@ -74,7 +74,7 @@ async function checkLarkCli(opts: PreFlightOptions): Promise<void> {
 
   // Step 2: bind — use --source lark-channel because lark-cli only
   // recognises openclaw / hermes / lark-channel as valid sources.
-  // Our data directory (~/.lark-ksgc/) is the same path lark-cli
+  // Our data directory (~/.lark-channel/) is the same path lark-cli
   // reads from, so the bind succeeds.
   const sBind = p.spinner();
   sBind.start('Binding to bridge credentials');

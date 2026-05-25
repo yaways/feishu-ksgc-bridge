@@ -46,13 +46,22 @@ function parseListSessions(output: string, limit: number): SessionSummary[] {
   const sessions: SessionSummary[] = [];
 
   for (const line of lines) {
-    // Match: N. <preview> (<relTime>) [<sessionId>]
-    const match = line.match(/^\s*\d+\.\s+(.+?)\s+\(([^)]+)\)\s+\[([0-9a-f-]{36})\]\s*$/i);
-    if (!match) continue;
+    // Parse from right: extract [UUID], then (relTime), remainder is preview.
+    // Preview may contain parentheses, so we match the LAST (...) group.
+    const uuidMatch = line.match(/\[([0-9a-f-]{36})\]\s*$/i);
+    if (!uuidMatch) continue;
+    const sessionId = uuidMatch[1]!;
 
-    const preview = match[1]!.trim();
-    const relTime = match[2]!.trim();
-    const sessionId = match[3]!.trim();
+    // Strip the [UUID] part, then extract the last (relTime) group
+    const beforeUuid = line.slice(0, line.lastIndexOf('[')).trimEnd();
+    const timeMatch = beforeUuid.match(/\(([^)]+)\)\s*$/);
+    if (!timeMatch) continue;
+    const relTime = timeMatch[1]!.trim();
+
+    // Everything before the last (relTime) is the preview
+    const beforeTime = beforeUuid.slice(0, beforeUuid.lastIndexOf('(')).trim();
+    // Strip the leading "N. " number prefix
+    const preview = beforeTime.replace(/^\s*\d+\.\s+/, '').trim();
 
     sessions.push({
       sessionId,

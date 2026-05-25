@@ -247,12 +247,12 @@ describe('no Claude/Anthropic references in source code', () => {
     expect(adapter).not.toContain('lark-channel-bridge');
   });
 
-  it('uses ~/.lark-ksgc/ as data directory', async () => {
+  it('uses ~/.lark-channel/ as data directory (aligned with lark-cli)', async () => {
     const paths = readFileSync(
       join(projectRoot, 'src/config/paths.ts'),
       'utf8',
     );
-    expect(paths).toContain('.lark-ksgc');
-    expect(paths).not.toContain('.lark-channel');
+    expect(paths).toContain('.lark-channel');
+    expect(paths).not.toContain('.lark-ksgc');
   });
 });
